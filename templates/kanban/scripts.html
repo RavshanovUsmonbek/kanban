@@ -1,0 +1,17 @@
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
+<script src="{{url_for('kanban.static', filename='js/components/jkanban.min.js')}}"></script>
+<script src="{{url_for('kanban.static', filename='js/components/axios.min.js')}}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+
+<script>
+    var issues_kanban_url = "{{ url_for('api.v1.kanban.list') }}"
+    var ticketUrl = "{{ url_for('api.v1.kanban.detail', hash_id='').rstrip('/') }}"
+    var issue_url = "{{ url_for('api.v1.issues.detail', hash_id='').rstrip('/') }}"
+    var attachmentUrl = "{{url_for('api.v1.kanban.attachment', id='').rstrip('/')}}"
+    var attachmentsUrl = "{{url_for('api.v1.kanban.attachments', hash_id='').rstrip('/')}}"
+
+</script>
+
+<script src="{{url_for('kanban.static', filename='js/kanban/kanban-board.js')}}"></script>
+<script src="{{url_for('kanban.static', filename='js/kanban/issue-detail-modal.js')}}"></script>
+<script src="{{ url_for('design-system.static', filename='assets/js/drag_drop.js') }}"></script>
