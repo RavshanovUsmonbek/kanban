@@ -4,7 +4,7 @@ from tools import db_orch as db
 
 def create_db_tables(app):
     # create tables unless they exist
-    from plugins.kanban.models.attachment import Attachment
+    import plugins.kanban.models
     with app.app_context():
         db.create_all()
         db.session.commit()

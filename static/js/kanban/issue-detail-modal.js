@@ -66,7 +66,7 @@ function addCommentIntoDOM(data){
         <div class="d-flex flex-row comment-row">
             <div class="p-2"><span class="round"><img alt="user" width="50" src="${data['image_url']}"></span></div>
             <div class="comment-text w-100">
-                <h6>${data['full_name']}</h6>
+                <h6>${data['name']}</h6>
                 <div class="comment-footer">
                 <span class="date">${date}</span>
                 <span class="action-icons"> 
@@ -96,7 +96,7 @@ function addCommentIntoDOM(data){
 
 function commentDeleteRequest(id){
     $.ajax({
-        url: comments_url + '/' + id,
+        url: comment_url + '/' + id,
         type: 'DELETE',
         success: function (response){
             $(`.comment-widgets[data-id="${id}"]`).remove()
@@ -140,7 +140,7 @@ function commentEdit(id){
         comment =  $(`div.comment-content[data-id="${id}"]`).summernote('code');
         data = {"comment": comment}
         $.ajax({
-            url: comments_url + '/' + id,
+            url: comment_url + '/' + id,
             type: 'PUT',
             data: JSON.stringify(data),
             success: function (response){
@@ -160,55 +160,56 @@ function commentEdit(id){
     });
 }
 
+function populateComments(comments){
+    if (comments.length>0){
+        var text = `<hr>    
+            <div class="container-fluid mt-4">
+            <h5>Comments</h5>
+            <div id="comments-list"></div>
+            </div>`
+        $('#comments-container').append(text);
+    }
+    $.each(comments, function(key, data){
+        date = moment(data['updated_at']).format('lll');
+        comment = `
+            <div class="comment-widgets my-3" data-id=${data['id']}>
+                <div class="d-flex flex-row comment-row">
+                    <div class="p-2"><span class="round"><img alt="user" width="50" src="${data['image_url']}"></span></div>
+                    <div class="comment-text w-100">
+                        <h6>${data['name']}</h6>
+                        <div class="comment-footer">
+                        <span class="date">${date}</span>
+                        <span class="action-icons"> 
+                            <a class="text-primary comment-save" data-id="${data['id']}" style="display:none"><i class="fas fa-save"></i></a>
+                            <a class="text-primary comment-cancel" data-id="${data['id']}" style="display:none"><i class="fas fa-window-close"></i></a>  
+                        </span>
+                        </div>
+                        <div class="m-b-5 m-t-10 comment-content" data-id="${data['id']}">
+                            ${data['comment']}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `
+        commentEditBtn = `<a class="mx-1 text-primary comment-edit" data-id="${data['id']}"><i class="fas fa-edit"></i></a>`
+        commentDeleteBtn = `<a class="text-primary comment-delete" data-id="${data['id']}"><i class="fas fa-trash"></i></a>`
+        $('#comments-list').append(comment);
+        if (isOwner(data, 'author_id')){
+            $(`.comment-widgets[data-id=${data['id']}] .action-icons`).append(commentEditBtn);
+            $(`.comment-widgets[data-id=${data['id']}] .action-icons`).append(commentDeleteBtn);
+        }
+    });
+    $('.comment-delete').on('click', function(){
+        commentDeleteRequest($(this).data('id'))
+    });
+}
+
+
 function create_table_body(quayls_data){
     table = $('.table');
     delete quayls_data['source']['id']
     $.each(quayls_data, function(key, value){
-        if (key == 'comments')
-        {
-            if (value.length>0){
-                var text = `<hr>    
-                    <div class="container-fluid mt-4">
-                    <h5>Comments</h5>
-                    <div id="comments-list"></div>
-                    </div>`
-                $('#comments-container').append(text);
-            }
-            $.each(value, function(key, data){
-                date = moment(data['updated_at']).format('lll');
-                comment = `
-                    <div class="comment-widgets my-3" data-id=${data['id']}>
-                        <div class="d-flex flex-row comment-row">
-                            <div class="p-2"><span class="round"><img alt="user" width="50" src="${data['image_url']}"></span></div>
-                            <div class="comment-text w-100">
-                                <h6>${data['full_name']}</h6>
-                                <div class="comment-footer">
-                                <span class="date">${date}</span>
-                                <span class="action-icons"> 
-                                    <a class="text-primary comment-save" data-id="${data['id']}" style="display:none"><i class="fas fa-save"></i></a>
-                                    <a class="text-primary comment-cancel" data-id="${data['id']}" style="display:none"><i class="fas fa-window-close"></i></a>  
-                                </span>
-                                </div>
-                                <div class="m-b-5 m-t-10 comment-content" data-id="${data['id']}">
-                                    ${data['comment']}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    `
-                commentEditBtn = `<a class="mx-1 text-primary comment-edit" data-id="${data['id']}"><i class="fas fa-edit"></i></a>`
-                commentDeleteBtn = `<a class="text-primary comment-delete" data-id="${data['id']}"><i class="fas fa-trash"></i></a>`
-                $('#comments-list').append(comment);
-                if (isOwner(data, 'author_id')){
-                    $(`.comment-widgets[data-id=${data['id']}] .action-icons`).append(commentEditBtn);
-                    $(`.comment-widgets[data-id=${data['id']}] .action-icons`).append(commentDeleteBtn);
-                }
-            });
-            $('.comment-delete').on('click', function(){
-                commentDeleteRequest($(this).data('id'))
-            });
-        }
-        else if (key != 'attachments' && key != 'issue_logs' && key!="hash_id")
+        if (key != 'attachments' && key != 'issue_logs' && key!="hash_id")
         {
             if (typeof value == "object"){
                 $.each(value, function(key, value){
@@ -324,7 +325,6 @@ function create_list_book(quayls_data){
     select.append('<option value=null>-</option>')
     axios.get(all_users_url)
     .then(response => {
-        console.log(response.data)
         $.each(response.data, function(key, value){
             key = value['id']
             value = value['full_name']
@@ -494,6 +494,10 @@ function createAttachments(attachments){
 }
 
 function addEventHandlers(){
+    $('.attachment-comment').unbind('click')
+    $('.attachment-delete').unbind('click')
+    $('.attachment-edit').unbind('click')
+
     $('.attachment-comment').on('click', function(e){
         id = $(this).data('id');
         url = $(`img#attachment-img[data-id="${id}"]`).attr('src');
@@ -511,6 +515,12 @@ function addEventHandlers(){
         $.ajax({
             url: attachmentUrl + '/' + id,
             type: 'DELETE',
+            statusCode: {
+                404: function(responseObject, textStatus, jqXHR) {
+                    $(`.attachment[data-id=${id}]`).remove()
+                },
+         
+            },
             success: function (response){
                 $(`.attachment[data-id=${id}]`).remove()
                 if($('#attachments').children().length==0){
@@ -588,6 +598,8 @@ function prepareFieldName(field){
 }
 
 function isOwner(object, user_lookup){
-    if (user_roles.includes('admin')) return true
-    return object[user_lookup] == user_id;
+    let isAdminUser = vueVm.registered_components.isAdmin;
+    let userId = vueVm.registered_components.navbar.user.id
+    if (isAdminUser) return true
+    return object[user_lookup] == userId;
 }

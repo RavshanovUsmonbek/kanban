@@ -9,7 +9,8 @@
     var issue_url = "{{ url_for('api.v1.issues.detail', hash_id='').rstrip('/') }}"
     var attachmentUrl = "{{url_for('api.v1.kanban.attachment', id='').rstrip('/')}}"
     var attachmentsUrl = "{{url_for('api.v1.kanban.attachments', hash_id='').rstrip('/')}}"
-
+    var comments_url = "{{ url_for('api.v1.kanban.comments', hash_id='').rstrip('/') }}"
+    var comment_url = "{{ url_for('api.v1.kanban.comment', id='').rstrip('/') }}"
 </script>
 
 <script src="{{url_for('kanban.static', filename='js/kanban/kanban-board.js')}}"></script>

@@ -6,6 +6,7 @@ const kanban = {
             issue: {},
             items: {'NEW':[], 'IN_PROGRESS':[], 'RESOLVED':[], 'TO_BE_NOTIFIED':[], 'DUE_DATE_MISSED':[]},
             kanbanObject: null,
+
         }
     },
     async mounted() {
@@ -49,11 +50,11 @@ const kanban = {
         $("#comment-submit").on('click', function(){
             if (!$('#comment-textarea').summernote('isEmpty')){
                 comment = $("#comment-textarea").summernote('code')
+                issueHashId = $('#ticketDetailModal').data('issue-id')
                 data = {"comment": comment}
-                data['issue_id'] = $('#ticketDetailModal').data('issue-id')
-                axios.post(comments_url, payload=data)
+                axios.post(comments_url+'/'+issueHashId, payload=data)
                     .then(response => {
-                        addCommentIntoDOM(response.data)
+                        addCommentIntoDOM(response.data['item'])
                         $('#comment-textarea').summernote('blur')
                         $('#comment-textarea').summernote('code', '')
                     })
@@ -66,19 +67,20 @@ const kanban = {
             var formData = new FormData();
             var files = $("#dropInput")[0].files
             
+            // return if no file has been selected
+            if (files.length==0) return
+
             for (let i=0; i<files.length; i++){
-                console.log(files[i], "helo")
                 formData.append("files[]", files[i])
             }
 
             const issueId = $('#ticketDetailModal').data('issue-id')
-            console.log(formData)
             axios.post(attachmentsUrl+'/'+issueId, payload=formData)
                 .then(response => {
                     attachments = response['data']['items']
                     attachments.forEach(file => addAttachmentIntoDOM(file));
                     showNotify("SUCCESS")
-                    $("#attachment-file").val(null);
+                    $("#dropInput").val(null);
                     $("#previewArea").empty()
                 })
         });
@@ -182,13 +184,18 @@ const kanban = {
                 issueId = el.dataset.eid 
                 url = ticketUrl + '/' + issueId
                 $('#ticketDetailModal').data('issue-id', issueId)
-                const response = await axios.get(url)
+                let response = await axios.get(url)
                 this.issue = response.data['item']
                 create_table_body(this.issue);
 
-                const resp = await axios.get(attachmentsUrl+"/"+issueId)
-                this.attachments = resp.data['items']
+                response = await axios.get(attachmentsUrl+"/"+issueId)
+                this.attachments = response.data['items']
                 createAttachments(this.attachments);
+
+
+                response = await axios.get(comments_url+"/"+issueId)
+                this.comments = response.data['items']
+                populateComments(this.comments)
                 $("#ticketDetailModal").modal('show');
                 // axios.get(url)
                 //     .then(response => {
